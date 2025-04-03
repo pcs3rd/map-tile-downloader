@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Map Tile Downloader</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        .form-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        #progress {
+            position: absolute;
+            top: 160px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div style="position: relative;">
+        <div id="map"></div>
+        <div class="form-container">
+            <form id="downloadForm">
+                <label for="map_style">Map Style:</label>
+                <select id="map_style" name="map_style"></select><br>
+                <label for="min_zoom">Min Zoom (0-19):</label>
+                <input type="number" id="min_zoom" name="min_zoom" min="0" max="19" value="10" required><br>
+                <label for="max_zoom">Max Zoom (0-19):</label>
+                <input type="number" id="max_zoom" name="max_zoom" min="0" max="19" value="12" required><br>
+                <input type="checkbox" id="use_cache" name="use_cache"> Use cached tiles<br>
+                <input type="checkbox" id="convert_to_8bit" checked> Convert to 8 bit for Meshtastic UI Maps<br>
+                <input type="checkbox" id="view_cached_tiles"> View cached tiles<br>
+                <button type="button" id="downloadBtn">Download Tiles</button>
+                <button type="button" id="downloadWorldBtn">Download World Basemap</button>
+                <button type="button" id="cancelBtn" disabled>Cancel Download</button>
+                <button type="button" id="deleteCacheBtn">Delete Cache</button>
+            </form>
+        </div>
+        <div id="progress">Ready</div>
+    </div>
+
+    <script>
+        // Initialize Socket.IO and Leaflet map
+        var socket = io();
+        var map = L.map('map');
+        var tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Set initial view to user's location if possible
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var lat = position.coords.latitude;
+                var lng = position.coords.longitude;
+                map.setView([lat, lng], 13);
+            }, function() {
+                map.setView([51.505, -0.09], 13);
+            });
+        } else {
+            map.setView([51.505, -0.09], 13);
+        }
+
+        // Set up drawing controls
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+        var drawControl = new L.Control.Draw({
+            draw: { polygon: true, marker: false, circle: false, circlemarker: false, polyline: false, rectangle: true },
+            edit: { featureGroup: drawnItems }
+        });
+        map.addControl(drawControl);
+
+        map.on('draw:created', function(e) {
+            drawnItems.addLayer(e.layer);
+            document.getElementById('downloadBtn').disabled = drawnItems.getLayers().length === 0;
+        });
+
+        map.on('draw:deleted', function() {
+            document.getElementById('downloadBtn').disabled = drawnItems.getLayers().length === 0;
+        });
+
+        // Create layer groups
+        var missingTilesLayer = L.layerGroup().addTo(map);
+        var cachedTilesLayer = L.layerGroup().addTo(map);
+        var downloadProgressLayer = L.layerGroup().addTo(map);
+
+        // Handle tile loading errors to draw missing tile grid
+        function onTileError(e) {
+            var coords = e.coords;
+            var z = coords.z;
+            var x = coords.x;
+            var y = coords.y;
+            var topLeft = map.unproject([x * 256, y * 256], z);
+            var bottomRight = map.unproject([(x + 1) * 256, (y + 1) * 256], z);
+            var bounds = L.latLngBounds(topLeft, bottomRight);
+            L.rectangle(bounds, { color: "red", weight: 1, fill: false }).addTo(missingTilesLayer);
+        }
+
+        // Sanitize map style for cache URL
+        function sanitizeStyleName(name) {
+            name = name.replace(/\s+/g, '-');  // Replace spaces with hyphens
+            name = name.replace(/[^a-zA-Z0-9-_]/g, '');  // Remove non-alphanumeric except hyphens and underscores
+            return name;
+        }
+
+        // Update tile layer based on map style and cache settings
+        function updateTileLayer() {
+            var mapStyleSelect = document.getElementById('map_style');
+            var mapStyleUrl = mapStyleSelect.value;
+            var styleName = sanitizeStyleName(mapStyleSelect.options[mapStyleSelect.selectedIndex].text);
+            var useCache = document.getElementById('use_cache').checked;
+            var tileUrl = useCache ? `/tiles/${styleName}/{z}/{x}/{y}.png` : mapStyleUrl;
+            tileLayer.setUrl(tileUrl);
+            tileLayer.off('loading');
+            tileLayer.off('tileerror', onTileError);
+            missingTilesLayer.clearLayers();
+            if (useCache) {
+                tileLayer.on('loading', function() {
+                    missingTilesLayer.clearLayers();
+                });
+                tileLayer.on('tileerror', onTileError);
+            }
+        }
+
+        // Populate map style dropdown from server
+        fetch('/get_map_sources')
+            .then(response => response.json())
+            .then(data => {
+                var select = document.getElementById('map_style');
+                for (var name in data) {
+                    var option = document.createElement('option');
+                    option.value = data[name];
+                    option.text = name;
+                    select.appendChild(option);
+                }
+                updateTileLayer(); // Set initial tile layer
+            });
+
+        // Bind updateTileLayer to input changes
+        document.getElementById('map_style').addEventListener('change', function() {
+            updateTileLayer();
+            if (document.getElementById('view_cached_tiles').checked) {
+                showCachedTiles();
+            }
+        });
+        document.getElementById('use_cache').addEventListener('change', updateTileLayer);
+
+        // Handle tile download for polygons
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            var polygons = [];
+            drawnItems.eachLayer(function(layer) {
+                if (layer instanceof L.Polygon) {
+                    var latlngs = layer.getLatLngs()[0];
+                    polygons.push(latlngs.map(function(latlng) { return [latlng.lat, latlng.lng]; }));
+                }
+            });
+            if (polygons.length === 0) {
+                alert('Please draw at least one shape.');
+                return;
+            }
+            var data = {
+                polygons: polygons,
+                min_zoom: parseInt(document.getElementById('min_zoom').value),
+                max_zoom: parseInt(document.getElementById('max_zoom').value),
+                map_style: document.getElementById('map_style').value,
+                convert_to_8bit: document.getElementById('convert_to_8bit').checked
+            };
+            socket.emit('start_download', data);
+        });
+
+        // Handle world basemap download
+        document.getElementById('downloadWorldBtn').addEventListener('click', function() {
+            var mapStyleUrl = document.getElementById('map_style').value;
+            var convertTo8bit = document.getElementById('convert_to_8bit').checked;
+            socket.emit('start_world_download', {map_style: mapStyleUrl, convert_to_8bit: convertTo8bit});
+        });
+
+        // Handle cache deletion
+        document.getElementById('deleteCacheBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete the cached tiles for this style?')) {
+                var mapStyleSelect = document.getElementById('map_style');
+                var styleName = sanitizeStyleName(mapStyleSelect.options[mapStyleSelect.selectedIndex].text);
+                fetch(`/delete_cache/${styleName}`, { method: 'DELETE' })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('Cache deleted successfully');
+                            if (document.getElementById('view_cached_tiles').checked) {
+                                showCachedTiles();
+                            }
+                        } else {
+                            alert('Failed to delete cache');
+                        }
+                    });
+            }
+        });
+
+        // Handle cancel download
+        document.getElementById('cancelBtn').addEventListener('click', function() {
+            socket.emit('cancel_download');
+        });
+
+        // Handle view cached tiles checkbox
+        document.getElementById('view_cached_tiles').addEventListener('change', function() {
+            if (this.checked) {
+                showCachedTiles();
+            } else {
+                cachedTilesLayer.clearLayers();
+            }
+        });
+
+        // Function to show cached tiles
+        function showCachedTiles() {
+            cachedTilesLayer.clearLayers();
+            var mapStyleSelect = document.getElementById('map_style');
+            var styleName = sanitizeStyleName(mapStyleSelect.options[mapStyleSelect.selectedIndex].text);
+            fetch(`/get_cached_tiles/${styleName}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(function(tile) {
+                        var z = tile[0], x = tile[1], y = tile[2];
+                        var topLeft = map.unproject([x * 256, y * 256], z);
+                        var bottomRight = map.unproject([(x + 1) * 256, (y + 1) * 256], z);
+                        var bounds = L.latLngBounds(topLeft, bottomRight);
+                        L.rectangle(bounds, { color: "#0000ff", weight: 1, fill: false }).addTo(cachedTilesLayer);
+                    });
+                });
+        }
+
+        // Progress tracking
+        var totalTiles = 0;
+        var downloadedTiles = 0;
+        var skippedTiles = 0;
+        var failedTiles = 0;
+
+        socket.on('download_started', function(data) {
+            totalTiles = data.total_tiles;
+            downloadedTiles = 0;
+            skippedTiles = 0;
+            failedTiles = 0;
+            downloadProgressLayer.clearLayers();
+            document.getElementById('cancelBtn').disabled = false;
+            updateProgress();
+        });
+
+        socket.on('tile_downloaded', function(data) {
+            downloadedTiles++;
+            updateProgress();
+            var bounds = [[data.south, data.west], [data.north, data.east]];
+            L.rectangle(bounds, { color: "#ff7800", weight: 1, fill: false }).addTo(downloadProgressLayer);
+        });
+
+        socket.on('tile_skipped', function(data) {
+            skippedTiles++;
+            updateProgress();
+            var bounds = [[data.south, data.west], [data.north, data.east]];
+            L.rectangle(bounds, { color: "#00ff00", weight: 1, fill: false }).addTo(downloadProgressLayer);
+        });
+
+        socket.on('tile_failed', function(data) {
+            failedTiles++;
+            updateProgress();
+        });
+
+        socket.on('tiles_downloaded', function() {
+            document.getElementById('progress').innerHTML += '<br>Tiles downloaded, preparing zip...';
+        });
+
+        socket.on('zipping_started', function() {
+            document.getElementById('progress').innerHTML += '<br>Zipping tiles...';
+        });
+
+        socket.on('download_complete', function(data) {
+            document.getElementById('cancelBtn').disabled = true;
+            downloadProgressLayer.clearLayers();
+            document.getElementById('progress').innerHTML = 'Ready';
+            window.location.href = data.zip_url;
+        });
+
+        socket.on('download_cancelled', function() {
+            document.getElementById('cancelBtn').disabled = true;
+            downloadProgressLayer.clearLayers();
+            document.getElementById('progress').innerHTML = 'Ready';
+            alert('Download cancelled');
+        });
+
+        socket.on('error', function(data) {
+            alert(data.message);
+        });
+
+        function updateProgress() {
+            var progress = ((downloadedTiles + skippedTiles + failedTiles) / totalTiles * 100).toFixed(2);
+            var progressText = `Progress: ${progress}% (${downloadedTiles} downloaded, ${skippedTiles} skipped, ${failedTiles} failed / ${totalTiles})`;
+            document.getElementById('progress').innerHTML = progressText;
+        }
+    </script>
+</body>
+</html>
