@@ -24,10 +24,10 @@ The Map Tile Downloader is a Flask-based web application designed to download ma
 	git clone https://github.com/yourusername/map-tile-downloader.git
 	cd map-tile-downloader
    
-2. 	Install Dependencies:
-    The application will automatically install required dependencies from requirements.txt on startup. However, you can manually install them using:
+2. Install Dependencies:
+    	The application will automatically install required dependencies from requirements.txt on startup. However, you can manually 		install them using:
 
-	pip install -r requirements.txt
+		pip install -r requirements.txt
 
 3. Set Up Configuration:
 
@@ -38,13 +38,13 @@ The Map Tile Downloader is a Flask-based web application designed to download ma
 The application uses a JSON configuration file (config/map_sources.json) to define available map sources. Each entry consists of a name and a URL template for the tiles.
 
 Example map_sources.json:
-	{
+	
 		"OpenStreetMap": "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
 		"OpenTopoMap": "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
 		"Stamen Terrain": "http://{s}.tile.stamen.com/terrain/{z}/{x}/{y}.png",
 		"CartoDB Positron": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
 		"CartoDB Dark Matter": "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
-	}
+	
 
 Adding a New Map Source: Simply add a new key-value pair to the JSON file with the map name and its tile URL template.
 
@@ -54,37 +54,37 @@ Adding a New Map Source: Simply add a new key-value pair to the JSON file with t
 
 		python src/TileDL.py
 	
-		The application will start a local server at http://localhost:5000.
+	The application will start a local server at http://localhost:5000.
 
 2. 	Access the Web Interface:
 
-		Open your web browser and navigate to http://localhost:5000.
+	Open your web browser and navigate to http://localhost:5000.
 		
 3. 	Select Map Style:
 
-		Choose a map style from the dropdown menu. The available options are loaded from map_sources.json.
+	Choose a map style from the dropdown menu. The available options are loaded from map_sources.json.
 4. 	Draw Polygons:
 	
-		Use the drawing tools to select areas on the map for which you want to download tiles.
+	Use the drawing tools to select areas on the map for which you want to download tiles.
 		
 5.	Set Zoom Levels:
 	
-		Specify the minimum and maximum zoom levels for the tiles you wish to download.
+	Specify the minimum and maximum zoom levels for the tiles you wish to download.
 
 6.	Download Tiles:
 
-		Click "Download Tiles" to start downloading tiles for the selected areas and zoom levels.
-		Alternatively, click "Download World Basemap" to download tiles for the entire world at zoom levels 0-7.
+	Click "Download Tiles" to start downloading tiles for the selected areas and zoom levels.
+	Alternatively, click "Download World Basemap" to download tiles for the entire world at zoom levels 0-7.
 
 7.	Monitor Progress:
 
-		The progress bar will display the number of downloaded, skipped, and failed tiles.
+	The progress bar will display the number of downloaded, skipped, and failed tiles.
 
 8.	Manage Cache:
 
-		Check "View cached tiles" to see outlines of cached tiles on the map.
+	Check "View cached tiles" to see outlines of cached tiles on the map.
 
-		Use "Delete Cache" to remove cached tiles for the selected map style.
+	Use "Delete Cache" to remove cached tiles for the selected map style.
 
 
 ##Contributing
