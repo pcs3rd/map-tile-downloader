@@ -113,11 +113,11 @@ For questions, suggestions, or support, please open an issue on the GitHub repos
 
 ## Acknowledgements
 
-Leaflet: For the interactive map interface.
-Flask: For the web framework.
-SocketIO: For real-time communication.
-Mercantile: For tile calculations.
-Shapely: For geometric operations.
-Pillow: For image processing.
+- Leaflet: For the interactive map interface.
+- Flask: For the web framework.
+- SocketIO: For real-time communication.
+- Mercantile: For tile calculations.
+- Shapely: For geometric operations.
+- Pillow: For image processing.
 
 Special thanks to all contributors and the open-source community!
