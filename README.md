@@ -36,7 +36,7 @@ The Map Tile Downloader is a Flask-based web application designed to download ma
    Ensure the config/map_sources.json file is present and correctly formatted. See the Configuration section below for an example.
    
    
-##Configuration
+## Configuration
 The application uses a JSON configuration file (config/map_sources.json) to define available map sources. Each entry consists of a name and a URL template for the tiles.
 
 Example map_sources.json:
@@ -51,7 +51,7 @@ Example map_sources.json:
 Adding a New Map Source: Simply add a new key-value pair to the JSON file with the map name and its tile URL template.
 
 
-##Usage
+## Usage
 1.	Run the Application:
 
 		python src/TileDL.py
@@ -89,24 +89,24 @@ Adding a New Map Source: Simply add a new key-value pair to the JSON file with t
 	Use "Delete Cache" to remove cached tiles for the selected map style.
 
 
-##Contributing
+## Contributing
 
 We welcome contributions to improve the Map Tile Downloader! To contribute:
 
--Fork the Repository: Create your own fork of the project.
--Create a Feature Branch: Work on your feature or bug fix in a separate branch.
--Submit a Pull Request: Once your changes are ready, submit a pull request to the main repository.
--Coding Standards: Follow PEP 8 for Python code and ensure your code is well-documented.
--Testing: Test your changes locally before submitting a pull request.
+- Fork the Repository: Create your own fork of the project.
+- Create a Feature Branch: Work on your feature or bug fix in a separate branch.
+- Submit a Pull Request: Once your changes are ready, submit a pull request to the main repository.
+- Coding Standards: Follow PEP 8 for Python code and ensure your code is well-documented.
+- Testing: Test your changes locally before submitting a pull request.
 
-License
+## License
 
 This project is licensed under the MIT License. See the  file for details.
 
 Contact Information
 For questions, suggestions, or support, please open an issue on the GitHub repository or contact k4mbd.ham@gmail.com
 
-##Acknowledgements
+## Acknowledgements
 
 Leaflet: For the interactive map interface.
 Flask: For the web framework.
