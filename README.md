@@ -2,6 +2,8 @@
 
 The Map Tile Downloader is a Flask-based web application designed to download map tiles from various sources. It allows users to select specific areas on a map, choose zoom levels, and download tiles for offline use. The application supports converting tiles to 8-bit color depth for compatibility with Meshtastic® UI Maps and provides options to view and manage cached tiles.
 
+<img width="964" alt="image" src="https://github.com/user-attachments/assets/57b041c9-2be6-4bf4-9ed4-98df24472a47" />
+
 ## Features
 
 - **Custom Area Downloads**: Draw polygons on the map to select specific areas for tile downloading.
