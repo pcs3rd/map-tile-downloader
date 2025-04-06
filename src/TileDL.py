@@ -297,4 +297,4 @@ def get_cached_tiles_route(style_name):
 if __name__ == '__main__':
     CACHE_DIR.mkdir(exist_ok=True)
     CONFIG_DIR.mkdir(exist_ok=True)
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=True, port=8080)
