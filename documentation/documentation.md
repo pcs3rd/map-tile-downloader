@@ -43,7 +43,6 @@ The Map Tile Downloader is a Flask-based web application designed to download ma
 * Select your preferred way to create a virtual environment. There are many tools and methods to create them.
 
 
-
 ## Installation
 0. Select the path on where the project will be created.
 
@@ -76,7 +75,7 @@ The application `utils/dependency_installer.py` will automatically install requi
 
 2.2.3) Manually install libraries one by one:
 
-`pip install -r LibraryName`
+`pip install LibraryName`
 
 
 3. Set Up Configuration (Optional, default sources are included) :
