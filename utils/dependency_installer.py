@@ -18,7 +18,7 @@ def install_dependencies():
         with open('requirements.txt', 'r') as f:
             requirements = f.read().splitlines()
         subprocess.check_call([sys.executable, '-m', 'pip', 'install', *requirements])
-        print(f"Dependencies Installed Successfully.")
+        print(f"\nDependencies Installed Successfully.")
     except subprocess.CalledProcessError as e:
         print(f"Failed to install dependencies: {e}")
         sys.exit(1)
