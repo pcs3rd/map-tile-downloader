@@ -19,8 +19,12 @@ import threading
 from PIL import Image
 from pathlib import Path
 
-DOWNLOADS_DIR = Path('downloads').resolve()  # Resolves to absolute path
-DOWNLOADS_DIR.mkdir(exist_ok=True)  # Create the directory if it doesn’t exist
+# Base directory for caching tiles, absolute path relative to script location
+BASE_DIR = Path(__file__).parent.parent  # Root of map-tile-downloader
+CACHE_DIR = BASE_DIR / 'tile-cache' ## Note: Fixed referece location for cached tiles
+DOWNLOADS_DIR = BASE_DIR / 'downloads'
+CACHE_DIR.mkdir(exist_ok=True)
+DOWNLOADS_DIR.mkdir(exist_ok=True)
 
 ## Note: Moved to 'utils/dependency_installer.py'
 # Ensure dependencies are installed
@@ -39,8 +43,6 @@ DOWNLOADS_DIR.mkdir(exist_ok=True)  # Create the directory if it doesn’t exist
 app = Flask(__name__, template_folder='../templates')
 socketio = SocketIO(app)
 
-# Base directory for caching tiles
-CACHE_DIR = Path('tile-cache')
 
 # Load map sources from config file
 CONFIG_DIR = Path('config')
