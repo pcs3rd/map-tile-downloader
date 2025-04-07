@@ -22,18 +22,19 @@ from pathlib import Path
 DOWNLOADS_DIR = Path('downloads').resolve()  # Resolves to absolute path
 DOWNLOADS_DIR.mkdir(exist_ok=True)  # Create the directory if it doesn’t exist
 
+## Note: Moved to 'utils/dependency_installer.py'
 # Ensure dependencies are installed
-def install_dependencies():
-    try:
-        with open('requirements.txt', 'r') as f:
-            requirements = f.read().splitlines()
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', *requirements])
-    except subprocess.CalledProcessError as e:
-        print(f"Failed to install dependencies: {e}")
-        sys.exit(1)
-
-# Install dependencies on startup if not already installed
-install_dependencies()
+#def install_dependencies():
+#    try:
+#        with open('requirements.txt', 'r') as f:
+#            requirements = f.read().splitlines()
+#        subprocess.check_call([sys.executable, '-m', 'pip', 'install', *requirements])
+#    except subprocess.CalledProcessError as e:
+#        print(f"Failed to install dependencies: {e}")
+#        sys.exit(1)
+#
+## Install dependencies on startup if not already installed
+#install_dependencies()
 
 app = Flask(__name__, template_folder='../templates')
 socketio = SocketIO(app)
