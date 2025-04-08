@@ -23,7 +23,7 @@ The Map Tile Downloader is a Flask-based web application designed to download ma
 
 1. Clone the Repository (or download the zip file and extract to the location of your choice):
    
-	git clone https://github.com/yourusername/map-tile-downloader.git
+	git clone https://github.com/mattdrum/map-tile-downloader.git
 	cd map-tile-downloader
    
 2. Install Dependencies (Optional) :
