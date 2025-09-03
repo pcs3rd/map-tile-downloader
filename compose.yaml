@@ -1,8 +1,8 @@
 services:
   MapTilesDownloader:
     image: ghcr.io/pcs3rd/map-tile-downloader:master
-    #ports:  #Host Port:Container Port
-    #  - 8080:8080
+    ports:  #Host Port:Container Port
+      - 5000:5000
     volumes:
       - ${host-directory}/mtd/config:/config
       - ${host-directory}/mtd/downloads:/downloads
