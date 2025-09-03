@@ -1,0 +1,16 @@
+services:
+  MapTilesDownloader:
+    image: ghcr.io/pcs3rd/map-tile-downloader:master
+    #ports:  #Host Port:Container Port
+    #  - 8080:8080
+    volumes:
+      - ${host-directory}/config:/config
+      - ${host-directory}/downloads:/downloads
+      - ${host-directory}/tile-cache:/tile-cache
+    labels:                                                                              # Optional if accessing directly via port
+      - "traefik.enable=true"                                                            # Enable/Disable Traefik
+      - "traefik.http.routers.MapTilesDownloader.rule=Host(`mtd.stickpile.net`)"             # Access domain
+      - "traefik.http.routers.MapTilesDownloader.entrypoints=websecure"                  # Use HTTPS
+      - "traefik.http.routers.MapTilesDownloader.tls.certresolver=httpsResolve"          # HTTPS Cert Resolver
+      - "traefik.http.services.MapTilesDownloader.loadbalancer.server.port=5000"         # Container Port
+      - "traefik.http.routers.MapTilesDownloader.middlewares=middlewares-authentik@file" # If you're using authentik
