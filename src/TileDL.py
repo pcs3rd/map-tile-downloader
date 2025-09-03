@@ -299,4 +299,4 @@ def get_cached_tiles_route(style_name):
 if __name__ == '__main__':
     CACHE_DIR.mkdir(exist_ok=True)
     CONFIG_DIR.mkdir(exist_ok=True)
-    socketio.run(app, debug=os.environ['DEBUG'], allow_unsafe_werkzeug=os.environ['IGNORE_DEV_WARNING'], host=os.environ['HOST'])
+    socketio.run(app, debug=os.environ['IS_DEBUG'], allow_unsafe_werkzeug=os.environ['IGNORE_DEV_WARNING'], host=os.environ['HOST'])
